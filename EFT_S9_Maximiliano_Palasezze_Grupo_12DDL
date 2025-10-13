@@ -1,0 +1,320 @@
+-- Generado por Oracle SQL Developer Data Modeler 23.1.0.087.0806
+--   en:        2025-10-12 21:34:56 CLST
+--   sitio:      Oracle Database 21c
+--   tipo:      Oracle Database 21c
+
+
+
+-- predefined type, no DDL - MDSYS.SDO_GEOMETRY
+
+-- predefined type, no DDL - XMLTYPE
+
+CREATE TABLE afp (
+    id_afp NUMBER(4) NOT NULL,
+    nombre VARCHAR2(60) NOT NULL
+);
+
+ALTER TABLE afp ADD CONSTRAINT afp_pk PRIMARY KEY ( id_afp );
+
+ALTER TABLE afp ADD CONSTRAINT afp_nombre_un UNIQUE ( nombre );
+
+CREATE TABLE asignacion_turno (
+    id_asignacion          NUMBER(12) NOT NULL,
+    fecha                  DATE NOT NULL,
+    empleado_id_empleado   NUMBER(8) NOT NULL,
+    turno_id_turno         NUMBER(4) NOT NULL,
+    maquina_numero_maquina NUMBER(6) NOT NULL,
+    maquina_id_planta      NUMBER(6) NOT NULL,
+    rol_en_turno           VARCHAR2(60)
+);
+
+ALTER TABLE asignacion_turno ADD CONSTRAINT asignacion_turno_pk PRIMARY KEY ( id_asignacion );
+
+ALTER TABLE asignacion_turno ADD CONSTRAINT asignacion_turno_id_empleado_fecha_un UNIQUE ( empleado_id_empleado,
+                                                                                           fecha );
+
+CREATE TABLE comuna (
+    id_comuna        NUMBER(6) NOT NULL,
+    nombre           VARCHAR2(100) NOT NULL,
+    region_id_region NUMBER(4) NOT NULL
+);
+
+ALTER TABLE comuna ADD CONSTRAINT comuna_pk PRIMARY KEY ( id_comuna );
+
+CREATE TABLE empleado (
+    id_empleado            NUMBER(8) NOT NULL,
+    rut                    VARCHAR2(12) NOT NULL,
+    nombres                VARCHAR2(80) NOT NULL,
+    apellidos              VARCHAR2(80) NOT NULL,
+    fecha_contratacion     DATE NOT NULL,
+    sueldo_base            NUMBER(12, 2) NOT NULL,
+    activo                 CHAR(1) DEFAULT 'S' NOT NULL,
+    planta_id_planta       NUMBER(6) NOT NULL,
+    afp_id_afp             NUMBER(4) NOT NULL,
+    sistema_salud_id_salud NUMBER(4) NOT NULL,
+    empleado_id_empleado   NUMBER(8)
+);
+
+ALTER TABLE empleado
+    ADD CONSTRAINT ck_empleado_activo CHECK ( activo IN ( 'S', 'N' ) );
+
+ALTER TABLE empleado ADD CONSTRAINT empleado_pk PRIMARY KEY ( id_empleado );
+
+ALTER TABLE empleado ADD CONSTRAINT empleado_rut_un UNIQUE ( rut );
+
+CREATE TABLE jefe_turno (
+    id_empleado          NUMBER(8) NOT NULL,
+    area_responsabilidad VARCHAR2(120) NOT NULL,
+    max_operarios        NUMBER(4) NOT NULL
+);
+
+ALTER TABLE jefe_turno ADD CONSTRAINT jefe_turno_pkv1 PRIMARY KEY ( id_empleado );
+
+ALTER TABLE jefe_turno ADD CONSTRAINT jefe_turno_pk UNIQUE ( id_empleado );
+
+CREATE TABLE maquina (
+    numero_maquina               NUMBER(6) NOT NULL,
+    planta_id_planta             NUMBER(6) NOT NULL,
+    nombre                       VARCHAR2(120) NOT NULL,
+    activo                       CHAR(1) DEFAULT 'S' NOT NULL,
+    tipo_maquina_id_tipo_maquina NUMBER(4) NOT NULL
+);
+
+ALTER TABLE maquina
+    ADD CONSTRAINT ck_maquina_activo CHECK ( activo IN ( 'S', 'N' ) );
+
+ALTER TABLE maquina ADD CONSTRAINT maquina_pk PRIMARY KEY ( numero_maquina,
+                                                            planta_id_planta );
+
+CREATE TABLE operario (
+    id_empleado          NUMBER(8) NOT NULL,
+    categoria_proceso    VARCHAR2(40) NOT NULL,
+    certificacion        VARCHAR2(120),
+    horas_estandar_turno NUMBER(3) DEFAULT 8 NOT NULL
+);
+
+ALTER TABLE operario ADD CONSTRAINT operario_pkv1 PRIMARY KEY ( id_empleado );
+
+ALTER TABLE operario ADD CONSTRAINT operario_pk UNIQUE ( id_empleado );
+
+CREATE TABLE orden_mantencion (
+    id_orden                       NUMBER(10) NOT NULL,
+    maquina_numero_maquina         NUMBER(6) NOT NULL,
+    maquina_id_planta              NUMBER(6) NOT NULL,
+    id_tecnico                     NUMBER(8) NOT NULL,
+    fecha_programada               DATE NOT NULL,
+    fecha_ejecucion                DATE,
+    descripcion                    VARCHAR2(400),
+    tecnico_mantencion_id_empleado NUMBER(8) NOT NULL
+);
+
+ALTER TABLE orden_mantencion
+    ADD CONSTRAINT ck_om_fechas CHECK ( fecha_ejecucion IS NULL
+                                        OR fecha_ejecucion >= fecha_programada );
+
+ALTER TABLE orden_mantencion ADD CONSTRAINT orden_mantencion_pk PRIMARY KEY ( id_orden );
+
+CREATE TABLE planta (
+    id_planta        NUMBER(6) NOT NULL,
+    nombre           VARCHAR2(120) NOT NULL,
+    direccion        VARCHAR2(200) NOT NULL,
+    comuna_id_comuna NUMBER(6) NOT NULL
+);
+
+ALTER TABLE planta ADD CONSTRAINT planta_pk PRIMARY KEY ( id_planta );
+
+ALTER TABLE planta ADD CONSTRAINT planta_nombre_un UNIQUE ( nombre );
+
+CREATE TABLE region (
+    id_region NUMBER(4) NOT NULL,
+    nombre    VARCHAR2(80) NOT NULL
+);
+
+ALTER TABLE region ADD CONSTRAINT region_pk PRIMARY KEY ( id_region );
+
+ALTER TABLE region ADD CONSTRAINT region_nombre_un UNIQUE ( nombre );
+
+CREATE TABLE sistema_salud (
+    id_salud NUMBER(4) NOT NULL,
+    nombre   VARCHAR2(60) NOT NULL
+);
+
+ALTER TABLE sistema_salud ADD CONSTRAINT sistema_salud_pk PRIMARY KEY ( id_salud );
+
+ALTER TABLE sistema_salud ADD CONSTRAINT sistema_salud_nombre_un UNIQUE ( nombre );
+
+CREATE TABLE tecnico_mantencion (
+    id_empleado               NUMBER(8) NOT NULL,
+    especialidad              VARCHAR2(40) NOT NULL,
+    nivel_certificacion       VARCHAR2(60),
+    tiempo_respuesta_estandar NUMBER(4)
+);
+
+ALTER TABLE tecnico_mantencion ADD CONSTRAINT tecnico_mantencion_pkv1 PRIMARY KEY ( id_empleado );
+
+ALTER TABLE tecnico_mantencion ADD CONSTRAINT tecnico_mantencion_pk UNIQUE ( id_empleado );
+
+CREATE TABLE tipo_maquina (
+    id_tipo_maquina NUMBER(4) NOT NULL,
+    nombre          VARCHAR2(80) NOT NULL
+);
+
+ALTER TABLE tipo_maquina ADD CONSTRAINT tipo_maquina_pk PRIMARY KEY ( id_tipo_maquina );
+
+ALTER TABLE tipo_maquina ADD CONSTRAINT tipo_maquina_nombre_un UNIQUE ( nombre );
+
+CREATE TABLE turno (
+    id_turno     NUMBER(4) NOT NULL,
+    nombre       VARCHAR2(40) NOT NULL,
+    hora_inicio  CHAR(5) NOT NULL,
+    hora_termino CHAR(5) NOT NULL
+);
+
+ALTER TABLE turno
+    ADD CONSTRAINT ck_turno_hora_inicio CHECK ( REGEXP_LIKE ( hora_inicio,
+                                                              '^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$' ) );
+
+ALTER TABLE turno
+    ADD CONSTRAINT ck_turno_hora_termino CHECK ( REGEXP_LIKE ( hora_termino,
+                                                               '^(0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$' ) );
+
+ALTER TABLE turno ADD CONSTRAINT turno_pk PRIMARY KEY ( id_turno );
+
+ALTER TABLE turno ADD CONSTRAINT turno_nombre_un UNIQUE ( nombre );
+
+ALTER TABLE asignacion_turno
+    ADD CONSTRAINT asignacion_turno_empleado_fk FOREIGN KEY ( empleado_id_empleado )
+        REFERENCES empleado ( id_empleado );
+
+ALTER TABLE asignacion_turno
+    ADD CONSTRAINT asignacion_turno_maquina_fk FOREIGN KEY ( maquina_numero_maquina,
+                                                             maquina_id_planta )
+        REFERENCES maquina ( numero_maquina,
+                             planta_id_planta );
+
+ALTER TABLE asignacion_turno
+    ADD CONSTRAINT asignacion_turno_turno_fk FOREIGN KEY ( turno_id_turno )
+        REFERENCES turno ( id_turno );
+
+ALTER TABLE comuna
+    ADD CONSTRAINT comuna_region_fk FOREIGN KEY ( region_id_region )
+        REFERENCES region ( id_region );
+
+ALTER TABLE empleado
+    ADD CONSTRAINT empleado_afp_fk FOREIGN KEY ( afp_id_afp )
+        REFERENCES afp ( id_afp );
+
+ALTER TABLE empleado
+    ADD CONSTRAINT empleado_empleado_fk FOREIGN KEY ( empleado_id_empleado )
+        REFERENCES empleado ( id_empleado );
+
+ALTER TABLE empleado
+    ADD CONSTRAINT empleado_planta_fk FOREIGN KEY ( planta_id_planta )
+        REFERENCES planta ( id_planta );
+
+ALTER TABLE empleado
+    ADD CONSTRAINT empleado_sistema_salud_fk FOREIGN KEY ( sistema_salud_id_salud )
+        REFERENCES sistema_salud ( id_salud );
+
+ALTER TABLE jefe_turno
+    ADD CONSTRAINT fk_jefe_empleado FOREIGN KEY ( id_empleado )
+        REFERENCES empleado ( id_empleado )
+            ON DELETE CASCADE;
+
+ALTER TABLE operario
+    ADD CONSTRAINT fk_operario_empleado FOREIGN KEY ( id_empleado )
+        REFERENCES empleado ( id_empleado )
+            ON DELETE CASCADE;
+
+ALTER TABLE tecnico_mantencion
+    ADD CONSTRAINT fk_tecnico_empleado FOREIGN KEY ( id_empleado )
+        REFERENCES empleado ( id_empleado )
+            ON DELETE CASCADE;
+
+ALTER TABLE maquina
+    ADD CONSTRAINT maquina_planta_fk FOREIGN KEY ( planta_id_planta )
+        REFERENCES planta ( id_planta );
+
+ALTER TABLE maquina
+    ADD CONSTRAINT maquina_tipo_maquina_fk FOREIGN KEY ( tipo_maquina_id_tipo_maquina )
+        REFERENCES tipo_maquina ( id_tipo_maquina );
+
+ALTER TABLE orden_mantencion
+    ADD CONSTRAINT orden_mantencion_maquina_fk FOREIGN KEY ( maquina_numero_maquina,
+                                                             maquina_id_planta )
+        REFERENCES maquina ( numero_maquina,
+                             planta_id_planta );
+
+ALTER TABLE orden_mantencion
+    ADD CONSTRAINT orden_mantencion_tecnico_mantencion_fk FOREIGN KEY ( tecnico_mantencion_id_empleado )
+        REFERENCES tecnico_mantencion ( id_empleado );
+
+ALTER TABLE planta
+    ADD CONSTRAINT planta_comuna_fk FOREIGN KEY ( comuna_id_comuna )
+        REFERENCES comuna ( id_comuna );
+
+CREATE SEQUENCE comuna_id_comuna_seq START WITH 1050 INCREMENT BY 5 NOCACHE;
+
+CREATE OR REPLACE TRIGGER comuna_id_comuna_trg BEFORE
+    INSERT ON comuna
+    FOR EACH ROW
+BEGIN
+    :new.id_comuna := comuna_id_comuna_seq.nextval;
+END;
+/
+
+CREATE SEQUENCE seq_region START WITH 1 NOCACHE ORDER;
+
+CREATE OR REPLACE TRIGGER bi_region_id BEFORE
+    INSERT ON region
+    FOR EACH ROW
+    WHEN ( new.id_region IS NULL )
+BEGIN
+    :new.id_region := seq_region.nextval;
+END;
+/
+
+
+
+-- Informe de Resumen de Oracle SQL Developer Data Modeler: 
+-- 
+-- CREATE TABLE                            14
+-- CREATE INDEX                             0
+-- ALTER TABLE                             46
+-- CREATE VIEW                              0
+-- ALTER VIEW                               0
+-- CREATE PACKAGE                           0
+-- CREATE PACKAGE BODY                      0
+-- CREATE PROCEDURE                         0
+-- CREATE FUNCTION                          0
+-- CREATE TRIGGER                           2
+-- ALTER TRIGGER                            0
+-- CREATE COLLECTION TYPE                   0
+-- CREATE STRUCTURED TYPE                   0
+-- CREATE STRUCTURED TYPE BODY              0
+-- CREATE CLUSTER                           0
+-- CREATE CONTEXT                           0
+-- CREATE DATABASE                          0
+-- CREATE DIMENSION                         0
+-- CREATE DIRECTORY                         0
+-- CREATE DISK GROUP                        0
+-- CREATE ROLE                              0
+-- CREATE ROLLBACK SEGMENT                  0
+-- CREATE SEQUENCE                          2
+-- CREATE MATERIALIZED VIEW                 0
+-- CREATE MATERIALIZED VIEW LOG             0
+-- CREATE SYNONYM                           0
+-- CREATE TABLESPACE                        0
+-- CREATE USER                              0
+-- 
+-- DROP TABLESPACE                          0
+-- DROP DATABASE                            0
+-- 
+-- REDACTION POLICY                         0
+-- 
+-- ORDS DROP SCHEMA                         0
+-- ORDS ENABLE SCHEMA                       0
+-- ORDS ENABLE OBJECT                       0
+-- 
+-- ERRORS                                   0
+-- WARNINGS                                 0
